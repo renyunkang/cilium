@@ -1316,8 +1316,12 @@ int tail_handle_ipv4_cont(struct __ctx_buff *ctx)
 {
 	__u32 dst_sec_identity = 0;
 	__s8 ext_err = 0;
+	int ret;
 
-	int ret = handle_ipv4_from_lxc(ctx, &dst_sec_identity, &ext_err);
+	char fmt[] = "tail_handle_ipv4_cont and handle_ipv4_from_lxc %d\n";
+	trace_printk(fmt, sizeof(fmt), ctx->ifindex); 
+
+	ret = handle_ipv4_from_lxc(ctx, &dst_sec_identity, &ext_err);
 
 	if (IS_ERR(ret))
 		return send_drop_notify_ext(ctx, SECLABEL_IPV4, dst_sec_identity,
@@ -1361,22 +1365,22 @@ static __always_inline int __tail_handle_ipv4(struct __ctx_buff *ctx,
 	if (unlikely(!is_valid_lxc_src_ipv4(ip4)))
 		return DROP_INVALID_SIP;
 
-#ifdef ENABLE_MULTICAST
-	if (mcast_ipv4_is_igmp(ip4)) {
-		/* note:
-		 * we will always drop IGMP from this point on as we have no
-		 * need to forward to the stack
-		 */
-		return mcast_ipv4_handle_igmp(ctx, ip4, data, data_end);
-	}
+// #ifdef ENABLE_MULTICAST
+// 	if (mcast_ipv4_is_igmp(ip4)) {
+// 		/* note:
+// 		 * we will always drop IGMP from this point on as we have no
+// 		 * need to forward to the stack
+// 		 */
+// 		return mcast_ipv4_handle_igmp(ctx, ip4, data, data_end);
+// 	}
 
-	if (IN_MULTICAST(bpf_ntohl(ip4->daddr))) {
-		if (mcast_lookup_subscriber_map(&ip4->daddr))
-			return tail_call_internal(ctx,
-						  CILIUM_CALL_MULTICAST_EP_DELIVERY,
-						  ext_err);
-	}
-#endif /* ENABLE_MULTICAST */
+// 	if (IN_MULTICAST(bpf_ntohl(ip4->daddr))) {
+// 		if (mcast_lookup_subscriber_map(&ip4->daddr))
+// 			return tail_call_internal(ctx,
+// 						  CILIUM_CALL_MULTICAST_EP_DELIVERY,
+// 						  ext_err);
+// 	}
+// #endif /* ENABLE_MULTICAST */
 
 #ifdef ENABLE_PER_PACKET_LB
 	/* will tailcall internally or return error */
@@ -1391,7 +1395,12 @@ __section_tail(CILIUM_MAP_CALLS, CILIUM_CALL_IPV4_FROM_LXC)
 int tail_handle_ipv4(struct __ctx_buff *ctx)
 {
 	__s8 ext_err = 0;
-	int ret = __tail_handle_ipv4(ctx, &ext_err);
+	int ret;
+
+	char fmt[] = "tail_handle_ipv4 and __tail_handle_ipv4 %d\n";
+	trace_printk(fmt, sizeof(fmt), ctx->ifindex); 
+
+	ret = __tail_handle_ipv4(ctx, &ext_err);
 
 	if (IS_ERR(ret))
 		return send_drop_notify_error_ext(ctx, SECLABEL_IPV4, ret, ext_err,
@@ -1458,13 +1467,13 @@ int cil_from_container(struct __ctx_buff *ctx)
 	}
 
 	switch (proto) {
-#ifdef ENABLE_IPV6
-	case bpf_htons(ETH_P_IPV6):
-		edt_set_aggregate(ctx, LXC_ID);
-		ret = tail_call_internal(ctx, CILIUM_CALL_IPV6_FROM_LXC, &ext_err);
-		sec_label = SECLABEL_IPV6;
-		break;
-#endif /* ENABLE_IPV6 */
+// #ifdef ENABLE_IPV6
+// 	case bpf_htons(ETH_P_IPV6):
+// 		edt_set_aggregate(ctx, LXC_ID);
+// 		ret = tail_call_internal(ctx, CILIUM_CALL_IPV6_FROM_LXC, &ext_err);
+// 		sec_label = SECLABEL_IPV6;
+// 		break;
+// #endif /* ENABLE_IPV6 */
 #ifdef ENABLE_IPV4
 	case bpf_htons(ETH_P_IP):
 		edt_set_aggregate(ctx, LXC_ID);
@@ -2178,6 +2187,10 @@ int handle_policy(struct __ctx_buff *ctx)
 	__s8 ext_err = 0;
 	__u16 proto;
 	int ret;
+
+	
+	char fmt[] = "handle_policy %d\n";
+	trace_printk(fmt, sizeof(fmt), ctx->ifindex); 
 
 	if (!validate_ethertype(ctx, &proto)) {
 		ret = DROP_UNSUPPORTED_L2;

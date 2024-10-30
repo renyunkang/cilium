@@ -1635,7 +1635,7 @@ var daemonCell = cell.Module(
 	cell.ProvidePrivate(daemonSettings),
 	cell.Invoke(registerEndpointStateResolver),
 	cell.Invoke(func(promise.Promise[*Daemon]) {}), // Force instantiation.
-	endpointBPFrogWatchdogCell,
+	// endpointBPFrogWatchdogCell,
 )
 
 type daemonParams struct {

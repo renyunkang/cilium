@@ -75,7 +75,10 @@ static __always_inline int
 arp_respond(struct __ctx_buff *ctx, union macaddr *smac, __be32 sip,
 	    union macaddr *dmac, __be32 tip, int direction)
 {
-	int ret = arp_prepare_response(ctx, smac, sip, dmac, tip);
+	int ret;
+	char fmt[] = "arp_respond sip:%u tip:%u\n";
+	trace_printk(fmt, sizeof(fmt), sip, tip); 
+	ret = arp_prepare_response(ctx, smac, sip, dmac, tip);
 
 	if (unlikely(ret != 0))
 		goto error;

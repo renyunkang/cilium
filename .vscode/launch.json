@@ -58,6 +58,21 @@
 			"trace": "log",
 			"logOutput": "rpc",
 			"substitutePath": [{"from": "${workspaceFolder}", "to": "/go/src/github.com/cilium/cilium"}],
-		}
+		},
+        {
+            "name": "debug daemon",
+            "type": "go",
+            "debugAdapter": "dlv-dap", // the default
+            "request": "launch",
+            "mode": "debug",
+            "host": "127.0.0.1",
+            "port": 12345,
+            "cwd": "/root/program/cloudnative/ryken/cilium",
+            "program": "/root/program/cloudnative/ryken/cilium/daemon/main.go",
+            "args":[
+				"--config-dir=/root/test/cilium/config-map", "--k8s-kubeconfig-path=/root/.kube/config"
+            ],
+            "env": { "K8S_NODE_NAME": "develop", "CILIUM_K8S_NAMESPACE": "kube-system", "KUBERNETES_SERVICE_HOST": "172.31.18.200", "KUBERNETES_SERVICE_PORT": "6443"}
+        },
 	]
 }
