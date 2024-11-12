@@ -935,6 +935,7 @@ func TestNodeSelector(t *testing.T) {
 	invalidSel := NewESFromK8sLabelSelector(labels.LabelSourceK8sKeyPrefix, labelSel)
 	invalidNodeSelectorRule := Rule{
 		NodeSelector: invalidSel,
+		Egress:       []EgressRule{{}},
 	}
 	err := invalidNodeSelectorRule.Sanitize()
 	require.EqualError(t, err, "invalid label selector: matchExpressions[0].operator: Invalid value: \"asdfasdfasdf\": not a valid selector operator")
@@ -942,11 +943,14 @@ func TestNodeSelector(t *testing.T) {
 	invalidRuleBothSelectors := Rule{
 		EndpointSelector: WildcardEndpointSelector,
 		NodeSelector:     WildcardEndpointSelector,
+		Egress:           []EgressRule{{}},
 	}
 	err = invalidRuleBothSelectors.Sanitize()
 	require.Equal(t, "rule cannot have both EndpointSelector and NodeSelector", err.Error())
 
-	invalidRuleNoSelector := Rule{}
+	invalidRuleNoSelector := Rule{
+		Egress: []EgressRule{{}},
+	}
 	err = invalidRuleNoSelector.Sanitize()
 	require.Equal(t, "rule must have one of EndpointSelector or NodeSelector", err.Error())
 }
@@ -1163,11 +1167,13 @@ func BenchmarkCIDRSanitize(b *testing.B) {
 func TestSanitizeDefaultDeny(t *testing.T) {
 	for _, tc := range []struct {
 		before      Rule
+		wantError   bool
 		wantIngress bool
 		wantEgress  bool
 	}{
 		{
-			before: Rule{},
+			before:    Rule{},
+			wantError: true,
 		},
 		{
 			before: Rule{
@@ -1219,7 +1225,12 @@ func TestSanitizeDefaultDeny(t *testing.T) {
 		b.EndpointSelector = EndpointSelector{LabelSelector: &slim_metav1.LabelSelector{}}
 
 		err := b.Sanitize()
-		assert.NoError(t, err)
+		if tc.wantError {
+			assert.Error(t, err)
+			continue
+		} else {
+			assert.NoError(t, err)
+		}
 		assert.NotNil(t, b.EnableDefaultDeny.Egress)
 		assert.NotNil(t, b.EnableDefaultDeny.Ingress)
 

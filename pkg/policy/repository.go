@@ -860,21 +860,21 @@ func (p *Repository) computePolicyEnforcementAndRules(securityIdentity *identity
 	hasIngressDefaultDeny := false
 	hasEgressDefaultDeny := false
 	for _, r := range matchingRules {
-		if !ingress || !hasIngressDefaultDeny { // short-circuit len()
-			if len(r.Ingress) > 0 || len(r.IngressDeny) > 0 {
+		if *r.EnableDefaultDeny.Ingress {
+			hasIngressDefaultDeny = true
+			ingress = true
+		} else {
+			if !ingress && (len(r.Ingress) > 0 || len(r.IngressDeny) > 0) { // short-circuit len()
 				ingress = true
-				if *r.EnableDefaultDeny.Ingress {
-					hasIngressDefaultDeny = true
-				}
 			}
 		}
 
-		if !egress || !hasEgressDefaultDeny { // short-circuit len()
-			if len(r.Egress) > 0 || len(r.EgressDeny) > 0 {
+		if *r.EnableDefaultDeny.Egress {
+			hasEgressDefaultDeny = true
+			egress = true
+		} else {
+			if !egress && (len(r.Egress) > 0 || len(r.EgressDeny) > 0) { // short-circuit len()
 				egress = true
-				if *r.EnableDefaultDeny.Egress {
-					hasEgressDefaultDeny = true
-				}
 			}
 		}
 		if ingress && egress && hasIngressDefaultDeny && hasEgressDefaultDeny {

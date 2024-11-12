@@ -1084,6 +1084,7 @@ func (ds *DaemonSuite) testAddCiliumNetworkPolicyV2(t *testing.T) {
 						}).
 						WithIngressRules(nil).
 						WithEgressRules(nil).
+						WithEnableDefaultDeny(true, true).
 						WithLabels(utils.GetPolicyLabels(
 							"production",
 							"db",
@@ -1156,6 +1157,7 @@ func (ds *DaemonSuite) testAddCiliumNetworkPolicyV2(t *testing.T) {
 						}).
 						WithIngressRules(nil).
 						WithEgressRules(nil).
+						WithEnableDefaultDeny(true, true).
 						WithLabels(utils.GetPolicyLabels(
 							"production",
 							"db",
@@ -1229,6 +1231,7 @@ func (ds *DaemonSuite) testAddCiliumNetworkPolicyV2(t *testing.T) {
 						}).
 						WithIngressRules(nil).
 						WithEgressRules(nil).
+						WithEnableDefaultDeny(true, true).
 						WithLabels(lbls),
 				})
 				return wanted{

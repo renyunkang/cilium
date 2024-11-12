@@ -228,6 +228,12 @@ func (r *Rule) WithEgressDenyRules(rules []EgressDenyRule) *Rule {
 	return r
 }
 
+// WithEnableDefaultDeny configures the Rule to enable default deny.
+func (r *Rule) WithEnableDefaultDeny(ingress, egress bool) *Rule {
+	r.EnableDefaultDeny = DefaultDenyConfig{&ingress, &egress}
+	return r
+}
+
 // WithLabels configures the Rule with the specified labels metadata.
 func (r *Rule) WithLabels(labels labels.LabelArray) *Rule {
 	r.Labels = labels

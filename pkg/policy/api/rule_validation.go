@@ -37,19 +37,32 @@ func (r *Rule) Sanitize() error {
 		// Default posture is per-direction (ingress or egress),
 		// if there is a peer selector for that direction, the
 		// default is deny, else allow.
+		var hasEgress, hasIngress bool
 		if r.EnableDefaultDeny.Egress == nil {
-			x := len(r.Egress) > 0 || len(r.EgressDeny) > 0
-			r.EnableDefaultDeny.Egress = &x
+			hasEgress = len(r.Egress) > 0 || len(r.EgressDeny) > 0
+		} else {
+			hasEgress = *r.EnableDefaultDeny.Egress
 		}
+
 		if r.EnableDefaultDeny.Ingress == nil {
-			x := len(r.Ingress) > 0 || len(r.IngressDeny) > 0
-			r.EnableDefaultDeny.Ingress = &x
+			hasIngress = len(r.Ingress) > 0 || len(r.IngressDeny) > 0
+			if r.EnableDefaultDeny.Egress == nil && !hasEgress && !hasIngress {
+				return fmt.Errorf("rule must have one of Ingress/IngressDeny/Egress/EgressDeny/EnableDefaultDeny.Ingress/EnableDefaultDeny.Egress")
+			}
+		} else {
+			hasIngress = *r.EnableDefaultDeny.Ingress
 		}
+
+		r.EnableDefaultDeny.Egress = &hasEgress
+		r.EnableDefaultDeny.Ingress = &hasIngress
 	} else {
+		if len(r.Ingress) == 0 && len(r.IngressDeny) == 0 && len(r.Egress) == 0 && len(r.EgressDeny) == 0 {
+			return fmt.Errorf("rule must have one of Ingress/IngressDeny/Egress/EgressDeny")
+		}
+
 		// Since Non Default Deny Policies is disabled by flag, set EnableDefaultDeny to true
 		r.EnableDefaultDeny.Egress = &enableDefaultDenyDefault
 		r.EnableDefaultDeny.Ingress = &enableDefaultDenyDefault
-
 	}
 
 	if r.EndpointSelector.LabelSelector == nil && r.NodeSelector.LabelSelector == nil {

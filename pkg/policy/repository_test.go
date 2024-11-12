@@ -261,6 +261,7 @@ func TestComputePolicyEnforcementAndRules(t *testing.T) {
 }
 
 func TestAddSearchDelete(t *testing.T) {
+	enableDefaultDenyDefault := true
 	td := newTestData()
 	repo := td.repo
 
@@ -269,19 +270,22 @@ func TestAddSearchDelete(t *testing.T) {
 		labels.ParseLabel("tag2"),
 	}
 	rule1 := api.Rule{
-		EndpointSelector: api.NewESFromLabels(labels.ParseSelectLabel("foo")),
-		Labels:           lbls1,
+		EndpointSelector:  api.NewESFromLabels(labels.ParseSelectLabel("foo")),
+		Labels:            lbls1,
+		EnableDefaultDeny: api.DefaultDenyConfig{Ingress: &enableDefaultDenyDefault, Egress: &enableDefaultDenyDefault},
 	}
 	rule1.Sanitize()
 	rule2 := api.Rule{
-		EndpointSelector: api.NewESFromLabels(labels.ParseSelectLabel("bar")),
-		Labels:           lbls1,
+		EndpointSelector:  api.NewESFromLabels(labels.ParseSelectLabel("bar")),
+		Labels:            lbls1,
+		EnableDefaultDeny: api.DefaultDenyConfig{Ingress: &enableDefaultDenyDefault, Egress: &enableDefaultDenyDefault},
 	}
 	rule2.Sanitize()
 	lbls2 := labels.LabelArray{labels.ParseSelectLabel("tag3")}
 	rule3 := api.Rule{
-		EndpointSelector: api.NewESFromLabels(labels.ParseSelectLabel("bar")),
-		Labels:           lbls2,
+		EndpointSelector:  api.NewESFromLabels(labels.ParseSelectLabel("bar")),
+		Labels:            lbls2,
+		EnableDefaultDeny: api.DefaultDenyConfig{Ingress: &enableDefaultDenyDefault, Egress: &enableDefaultDenyDefault},
 	}
 	rule3.Sanitize()
 
@@ -2394,11 +2398,30 @@ func TestDefaultAllow(t *testing.T) {
 		return r
 	}
 
+	genNoRule := func(idefaultDeny, edefaultDeny bool) api.Rule {
+		name := fmt.Sprintf("norule_%v_%v", idefaultDeny, edefaultDeny)
+		r := api.Rule{
+			EndpointSelector: api.NewESFromLabels(fooSelectLabel),
+			Labels:           labels.LabelArray{labels.NewLabel(k8sConst.PolicyLabelName, name, labels.LabelSourceAny)},
+		}
+
+		r.EnableDefaultDeny.Ingress = &idefaultDeny
+		r.EnableDefaultDeny.Egress = &edefaultDeny
+		require.NoError(t, r.Sanitize())
+		return r
+	}
+
 	iDeny := genRule(true, true)   // ingress default deny
 	iAllow := genRule(true, false) // ingress default allow
 
 	eDeny := genRule(false, true)   // egress default deny
 	eAllow := genRule(false, false) // egress default allow
+
+	iNoRuleDeny := genNoRule(true, false)   // ingress default deny
+	iNoRuleAllow := genNoRule(false, false) // ingress default allow
+
+	eNoRuleDeny := genNoRule(false, true)   // egress default deny
+	eNoRuleAllow := genNoRule(false, false) // egress default allow
 
 	type testCase struct {
 		rules           []api.Rule
@@ -2425,6 +2448,25 @@ func TestDefaultAllow(t *testing.T) {
 			ingress: true,
 			ruleC:   2,
 		},
+		{
+			rules:   []api.Rule{iNoRuleDeny},
+			ingress: true,
+			ruleC:   1,
+		},
+		{
+			rules: []api.Rule{iNoRuleAllow},
+			ruleC: 1,
+		},
+		{
+			rules:   []api.Rule{iAllow, iNoRuleAllow},
+			ingress: true,
+			ruleC:   3,
+		},
+		{
+			rules:   []api.Rule{iAllow, iNoRuleDeny}, // iNoRuleDeny has set default-deny, so no wildcard
+			ingress: true,
+			ruleC:   2,
+		},
 	}
 
 	egressCases := []testCase{
@@ -2443,6 +2485,25 @@ func TestDefaultAllow(t *testing.T) {
 		},
 		{
 			rules:  []api.Rule{eDeny, eAllow}, // default-deny takes precedence, no wildcard
+			egress: true,
+			ruleC:  2,
+		},
+		{
+			rules:  []api.Rule{eNoRuleDeny},
+			egress: true,
+			ruleC:  1,
+		},
+		{
+			rules: []api.Rule{eNoRuleAllow},
+			ruleC: 1,
+		},
+		{
+			rules:  []api.Rule{eAllow, eNoRuleAllow},
+			egress: true,
+			ruleC:  3,
+		},
+		{
+			rules:  []api.Rule{eAllow, eNoRuleDeny}, // eNoRuleDeny has set default-deny, so no wildcard
 			egress: true,
 			ruleC:  2,
 		},
