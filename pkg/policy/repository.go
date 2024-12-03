@@ -753,7 +753,7 @@ func (p *Repository) computePolicyEnforcementAndRules(securityIdentity *identity
 		if !ingress || !hasIngressDefaultDeny { // short-circuit len()
 			if len(r.Ingress) > 0 || len(r.IngressDeny) > 0 {
 				ingress = true
-				if *r.EnableDefaultDeny.Ingress {
+				if r.EnableDefaultDeny.Ingress == nil || *r.EnableDefaultDeny.Ingress {
 					hasIngressDefaultDeny = true
 				}
 			}
@@ -762,7 +762,7 @@ func (p *Repository) computePolicyEnforcementAndRules(securityIdentity *identity
 		if !egress || !hasEgressDefaultDeny { // short-circuit len()
 			if len(r.Egress) > 0 || len(r.EgressDeny) > 0 {
 				egress = true
-				if *r.EnableDefaultDeny.Egress {
+				if r.EnableDefaultDeny.Egress == nil || *r.EnableDefaultDeny.Egress {
 					hasEgressDefaultDeny = true
 				}
 			}

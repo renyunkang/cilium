@@ -33,24 +33,31 @@ var (
 // Note: this function is called from both the operator and the agent;
 // make sure any configuration flags are bound in **both** binaries.
 func (r *Rule) Sanitize() error {
-	if option.Config.EnableNonDefaultDenyPolicies {
-		// Fill in the default traffic posture of this Rule.
-		// Default posture is per-direction (ingress or egress),
-		// if there is a peer selector for that direction, the
-		// default is deny, else allow.
-		if r.EnableDefaultDeny.Egress == nil {
-			x := len(r.Egress) > 0 || len(r.EgressDeny) > 0
-			r.EnableDefaultDeny.Egress = &x
-		}
-		if r.EnableDefaultDeny.Ingress == nil {
-			x := len(r.Ingress) > 0 || len(r.IngressDeny) > 0
-			r.EnableDefaultDeny.Ingress = &x
-		}
-	} else {
-		// Since Non Default Deny Policies is disabled by flag, set EnableDefaultDeny to true
-		r.EnableDefaultDeny.Egress = &enableDefaultDenyDefault
-		r.EnableDefaultDeny.Ingress = &enableDefaultDenyDefault
+	if len(r.Ingress) == 0 && len(r.IngressDeny) == 0 && len(r.Egress) == 0 && len(r.EgressDeny) == 0 {
+		return fmt.Errorf("rule must have at least one of Ingress, IngressDeny, Egress, EgressDeny")
+	}
 
+	if r.EnableDefaultDeny.Egress != nil {
+		if len(r.Egress) == 0 && len(r.EgressDeny) == 0 {
+			return fmt.Errorf("when EnableDefaultDeny.Egress is set, rule must have at least one of Egress, EgressDeny")
+		}
+	}
+
+	if r.EnableDefaultDeny.Ingress != nil {
+		if len(r.Ingress) == 0 && len(r.IngressDeny) == 0 {
+			return fmt.Errorf("when EnableDefaultDeny.Ingress is set, rule must have at least one of Ingress, IngressDeny")
+		}
+	}
+
+	if !option.Config.EnableNonDefaultDenyPolicies {
+		// Since Non Default Deny Policies is disabled by flag, set EnableDefaultDeny to true
+		if len(r.Egress) > 0 || len(r.EgressDeny) > 0 {
+			r.EnableDefaultDeny.Egress = &enableDefaultDenyDefault
+		}
+
+		if len(r.Ingress) > 0 || len(r.IngressDeny) > 0 {
+			r.EnableDefaultDeny.Ingress = &enableDefaultDenyDefault
+		}
 	}
 
 	if r.EndpointSelector.LabelSelector == nil && r.NodeSelector.LabelSelector == nil {

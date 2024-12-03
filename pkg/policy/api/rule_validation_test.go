@@ -948,6 +948,7 @@ func TestNodeSelector(t *testing.T) {
 	invalidSel := NewESFromK8sLabelSelector(labels.LabelSourceK8sKeyPrefix, labelSel)
 	invalidNodeSelectorRule := Rule{
 		NodeSelector: invalidSel,
+		Egress:       []EgressRule{{}},
 	}
 	err := invalidNodeSelectorRule.Sanitize()
 	require.EqualError(t, err, "invalid label selector: matchExpressions[0].operator: Invalid value: \"asdfasdfasdf\": not a valid selector operator")
@@ -955,11 +956,14 @@ func TestNodeSelector(t *testing.T) {
 	invalidRuleBothSelectors := Rule{
 		EndpointSelector: WildcardEndpointSelector,
 		NodeSelector:     WildcardEndpointSelector,
+		Egress:           []EgressRule{{}},
 	}
 	err = invalidRuleBothSelectors.Sanitize()
 	require.Equal(t, "rule cannot have both EndpointSelector and NodeSelector", err.Error())
 
-	invalidRuleNoSelector := Rule{}
+	invalidRuleNoSelector := Rule{
+		Egress: []EgressRule{{}},
+	}
 	err = invalidRuleNoSelector.Sanitize()
 	require.Equal(t, "rule must have one of EndpointSelector or NodeSelector", err.Error())
 }
@@ -1174,69 +1178,90 @@ func BenchmarkCIDRSanitize(b *testing.B) {
 }
 
 func TestSanitizeDefaultDeny(t *testing.T) {
+	trueValue := true
+	falseValue := false
 	for _, tc := range []struct {
-		before      Rule
-		wantIngress bool
-		wantEgress  bool
+		before    Rule
+		wantError bool
 	}{
 		{
-			before: Rule{},
+			before:    Rule{},
+			wantError: true,
+		},
+		{
+			before: Rule{
+				Ingress:           []IngressRule{{}},
+				EnableDefaultDeny: DefaultDenyConfig{Egress: &trueValue},
+			},
+			wantError: true,
+		},
+		{
+			before: Rule{
+				Ingress:           []IngressRule{{}},
+				EnableDefaultDeny: DefaultDenyConfig{Egress: &falseValue},
+			},
+			wantError: true,
+		},
+		{
+			before: Rule{
+				Egress:            []EgressRule{{}},
+				EnableDefaultDeny: DefaultDenyConfig{Ingress: &trueValue},
+			},
+			wantError: true,
+		},
+		{
+			before: Rule{
+				Egress:            []EgressRule{{}},
+				EnableDefaultDeny: DefaultDenyConfig{Ingress: &falseValue},
+			},
+			wantError: true,
 		},
 		{
 			before: Rule{
 				Ingress: []IngressRule{{}},
 			},
-			wantIngress: true,
 		},
 		{
 			before: Rule{
 				IngressDeny: []IngressDenyRule{{}},
 			},
-			wantIngress: true,
 		},
 		{
 			before: Rule{
 				Ingress:     []IngressRule{{}},
 				IngressDeny: []IngressDenyRule{{}},
 			},
-			wantIngress: true,
 		},
 		{
 			before: Rule{
 				Egress:     []EgressRule{{}},
 				EgressDeny: []EgressDenyRule{{}},
 			},
-			wantEgress: true,
 		}, {
 			before: Rule{
 				EgressDeny: []EgressDenyRule{{}},
 			},
-			wantEgress: true,
 		},
 		{
 			before: Rule{
 				Egress: []EgressRule{{}},
 			},
-			wantEgress: true,
 		},
 		{
 			before: Rule{
 				Egress:  []EgressRule{{}},
 				Ingress: []IngressRule{{}},
 			},
-			wantEgress:  true,
-			wantIngress: true,
 		},
 	} {
 		b := tc.before
 		b.EndpointSelector = EndpointSelector{LabelSelector: &slim_metav1.LabelSelector{}}
 
 		err := b.Sanitize()
-		assert.NoError(t, err)
-		assert.NotNil(t, b.EnableDefaultDeny.Egress)
-		assert.NotNil(t, b.EnableDefaultDeny.Ingress)
-
-		assert.Equal(t, tc.wantEgress, *b.EnableDefaultDeny.Egress, "Rule.EnableDefaultDeny.Egress should match")
-		assert.Equal(t, tc.wantIngress, *b.EnableDefaultDeny.Ingress, "Rule.EnableDefaultDeny.Ingress should match")
+		if tc.wantError {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+		}
 	}
 }
