@@ -84,7 +84,7 @@ func GenerateL3IngressRules(numRules int) (api.Rules, identity.IdentityMap) {
 			Ingress:          []api.IngressRule{ingRule},
 			Labels:           utils.GetPolicyLabels("default", "l3-ingress", uuid, utils.ResourceTypeCiliumNetworkPolicy),
 		}
-		rule.Sanitize()
+
 		rules = append(rules, &rule)
 	}
 	return rules, generateNumIdentities(3000)
@@ -176,7 +176,7 @@ func (td *testData) bootstrapRepo(ruleGenFunc func(int) (api.Rules, identity.Ide
 	apiRules, ids := ruleGenFunc(numRules)
 	td.sc.UpdateIdentities(ids, nil, wg)
 	wg.Wait()
-	td.repo.MustAddList(apiRules)
+	td.repo.MustAddList(apiRules.DeepCopy())
 }
 
 func BenchmarkRegenerateCIDRPolicyRules(b *testing.B) {
@@ -253,7 +253,6 @@ func TestL7WithIngressWildcard(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 
@@ -360,7 +359,6 @@ func TestL7WithLocalHostWildcard(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 
@@ -466,7 +464,6 @@ func TestMapStateWithIngressWildcard(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 
@@ -594,7 +591,6 @@ func TestMapStateWithIngress(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 

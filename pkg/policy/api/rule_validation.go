@@ -33,6 +33,22 @@ var (
 // Note: this function is called from both the operator and the agent;
 // make sure any configuration flags are bound in **both** binaries.
 func (r *Rule) Sanitize() error {
+	if len(r.Ingress) == 0 && len(r.IngressDeny) == 0 && len(r.Egress) == 0 && len(r.EgressDeny) == 0 {
+		return fmt.Errorf("rule must have at least one of Ingress, IngressDeny, Egress, EgressDeny")
+	}
+
+	if r.EnableDefaultDeny.Egress != nil {
+		if len(r.Egress) == 0 && len(r.EgressDeny) == 0 {
+			return fmt.Errorf("when EnableDefaultDeny.Egress is set, rule must have at least one of Egress, EgressDeny")
+		}
+	}
+
+	if r.EnableDefaultDeny.Ingress != nil {
+		if len(r.Ingress) == 0 && len(r.IngressDeny) == 0 {
+			return fmt.Errorf("when EnableDefaultDeny.Ingress is set, rule must have at least one of Ingress, IngressDeny")
+		}
+	}
+
 	if option.Config.EnableNonDefaultDenyPolicies {
 		// Fill in the default traffic posture of this Rule.
 		// Default posture is per-direction (ingress or egress),

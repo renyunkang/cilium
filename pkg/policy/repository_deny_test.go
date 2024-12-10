@@ -58,7 +58,6 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 			fooIngressDenyRule1Label,
 		},
 	}
-	fooIngressDenyRule1.Sanitize()
 
 	fooIngressDenyRule2 := api.Rule{
 		EndpointSelector: api.NewESFromLabels(fooSelectLabel),
@@ -75,7 +74,6 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 			fooIngressDenyRule2Label,
 		},
 	}
-	fooIngressDenyRule2.Sanitize()
 
 	fooEgressDenyRule1 := api.Rule{
 		EndpointSelector: api.NewESFromLabels(fooSelectLabel),
@@ -92,7 +90,6 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 			fooEgressDenyRule1Label,
 		},
 	}
-	fooEgressDenyRule1.Sanitize()
 
 	fooEgressDenyRule2 := api.Rule{
 		EndpointSelector: api.NewESFromLabels(fooSelectLabel),
@@ -109,7 +106,6 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 			fooEgressDenyRule2Label,
 		},
 	}
-	fooEgressDenyRule2.Sanitize()
 
 	combinedRule := api.Rule{
 		EndpointSelector: api.NewESFromLabels(fooSelectLabel),
@@ -135,7 +131,6 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 			combinedLabel,
 		},
 	}
-	combinedRule.Sanitize()
 
 	genCommentf := func(ingress, accept bool) string {
 		direction := "egress"
@@ -159,6 +154,7 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 	require.EqualValues(t, ruleSlice{}, matchingRules, "returned matching rules did not match")
 
 	_, _, err := repo.mustAdd(fooIngressDenyRule1)
+	fooIngressDenyRule1.Sanitize()
 	require.NoError(t, err, "unable to add rule to policy repository")
 	ing, egr, matchingRules = repo.computePolicyEnforcementAndRules(fooIdentity)
 	require.True(t, ing, genCommentf(true, true))
@@ -166,6 +162,7 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 	require.EqualValues(t, fooIngressDenyRule1, matchingRules[0].Rule, "returned matching rules did not match")
 
 	_, _, err = repo.mustAdd(fooIngressDenyRule2)
+	fooIngressDenyRule2.Sanitize()
 	require.NoError(t, err, "unable to add rule to policy repository")
 	ing, egr, matchingRules = repo.computePolicyEnforcementAndRules(fooIdentity)
 	require.True(t, ing, genCommentf(true, true))
@@ -188,6 +185,7 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 	require.EqualValues(t, ruleSlice{}, matchingRules, "returned matching rules did not match")
 
 	_, _, err = repo.mustAdd(fooEgressDenyRule1)
+	fooEgressDenyRule1.Sanitize()
 	require.NoError(t, err, "unable to add rule to policy repository")
 	ing, egr, matchingRules = repo.computePolicyEnforcementAndRules(fooIdentity)
 	require.False(t, ing, genCommentf(true, false))
@@ -197,6 +195,7 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 	require.Equal(t, 1, numDeleted)
 
 	_, _, err = repo.mustAdd(fooEgressDenyRule2)
+	fooEgressDenyRule2.Sanitize()
 	require.NoError(t, err, "unable to add rule to policy repository")
 	ing, egr, matchingRules = repo.computePolicyEnforcementAndRules(fooIdentity)
 	require.False(t, ing, genCommentf(true, false))
@@ -207,6 +206,7 @@ func TestComputePolicyDenyEnforcementAndRules(t *testing.T) {
 	require.Equal(t, 1, numDeleted)
 
 	_, _, err = repo.mustAdd(combinedRule)
+	combinedRule.Sanitize()
 	require.NoError(t, err, "unable to add rule to policy repository")
 	ing, egr, matchingRules = repo.computePolicyEnforcementAndRules(fooIdentity)
 	require.True(t, ing, genCommentf(true, true))
@@ -546,7 +546,6 @@ func TestWildcardL3RulesIngressDeny(t *testing.T) {
 		},
 		Labels: labelsL3,
 	}
-	l3Rule.Sanitize()
 	_, _, err := repo.mustAdd(l3Rule)
 	require.NoError(t, err)
 
@@ -602,7 +601,6 @@ func TestWildcardL4RulesIngressDeny(t *testing.T) {
 		},
 		Labels: labelsL4Kafka,
 	}
-	l49092Rule.Sanitize()
 	_, _, err := repo.mustAdd(l49092Rule)
 	require.NoError(t, err)
 
@@ -622,7 +620,6 @@ func TestWildcardL4RulesIngressDeny(t *testing.T) {
 		},
 		Labels: labelsL4HTTP,
 	}
-	l480Rule.Sanitize()
 	_, _, err = repo.mustAdd(l480Rule)
 	require.NoError(t, err)
 
@@ -694,7 +691,6 @@ func TestL3DependentL4IngressDenyFromRequires(t *testing.T) {
 			},
 		},
 	}
-	l480Rule.Sanitize()
 	_, _, err := repo.mustAdd(l480Rule)
 	require.NoError(t, err)
 
@@ -766,7 +762,6 @@ func TestL3DependentL4EgressDenyFromRequires(t *testing.T) {
 			},
 		},
 	}
-	l480Rule.Sanitize()
 	_, _, err := repo.mustAdd(l480Rule)
 	require.NoError(t, err)
 
@@ -846,7 +841,6 @@ func TestWildcardL3RulesEgressDeny(t *testing.T) {
 		},
 		Labels: labelsL4,
 	}
-	l3Rule.Sanitize()
 	_, _, err := repo.mustAdd(l3Rule)
 	require.NoError(t, err)
 
@@ -867,8 +861,6 @@ func TestWildcardL3RulesEgressDeny(t *testing.T) {
 		},
 		Labels: labelsICMP,
 	}
-	err = icmpRule.Sanitize()
-	require.NoError(t, err)
 
 	_, _, err = repo.mustAdd(icmpRule)
 	require.NoError(t, err)
@@ -891,8 +883,6 @@ func TestWildcardL3RulesEgressDeny(t *testing.T) {
 		},
 		Labels: labelsICMPv6,
 	}
-	err = icmpV6Rule.Sanitize()
-	require.NoError(t, err)
 
 	_, _, err = repo.mustAdd(icmpV6Rule)
 	require.NoError(t, err)
@@ -977,7 +967,7 @@ func TestWildcardL4RulesEgressDeny(t *testing.T) {
 		},
 		Labels: labelsL3DNS,
 	}
-	l453Rule.Sanitize()
+
 	_, _, err := repo.mustAdd(l453Rule)
 	require.NoError(t, err)
 
@@ -997,7 +987,7 @@ func TestWildcardL4RulesEgressDeny(t *testing.T) {
 		},
 		Labels: labelsL3HTTP,
 	}
-	l480Rule.Sanitize()
+
 	_, _, err = repo.mustAdd(l480Rule)
 	require.NoError(t, err)
 
@@ -1081,7 +1071,7 @@ func TestWildcardCIDRRulesEgressDeny(t *testing.T) {
 		},
 		Labels: labelsHTTP,
 	}
-	l480Get.Sanitize()
+
 	_, _, err := repo.mustAdd(l480Get)
 	require.NoError(t, err)
 
@@ -1096,7 +1086,7 @@ func TestWildcardCIDRRulesEgressDeny(t *testing.T) {
 		},
 		Labels: labelsL3,
 	}
-	l3Rule.Sanitize()
+
 	_, _, err = repo.mustAdd(l3Rule)
 	require.NoError(t, err)
 
@@ -1162,7 +1152,7 @@ func TestWildcardL3RulesIngressDenyFromEntities(t *testing.T) {
 		},
 		Labels: labelsL3,
 	}
-	l3Rule.Sanitize()
+
 	_, _, err := repo.mustAdd(l3Rule)
 	require.NoError(t, err)
 
@@ -1229,7 +1219,7 @@ func TestWildcardL3RulesEgressDenyToEntities(t *testing.T) {
 		},
 		Labels: labelsL3,
 	}
-	l3Rule.Sanitize()
+
 	_, _, err := repo.mustAdd(l3Rule)
 	require.NoError(t, err)
 

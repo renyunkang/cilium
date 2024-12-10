@@ -40,7 +40,7 @@ func GenerateL3IngressDenyRules(numRules int) (api.Rules, identity.IdentityMap) 
 			EndpointSelector: fooSelector,
 			IngressDeny:      []api.IngressDenyRule{ingDenyRule},
 		}
-		rule.Sanitize()
+
 		rules = append(rules, &rule)
 	}
 
@@ -174,7 +174,6 @@ func GenerateCIDRDenyRules(numRules int) (api.Rules, identity.IdentityMap) {
 			EgressDeny:       []api.EgressDenyRule{generateCIDREgressDenyRule(i + 773)},
 			Labels:           utils.GetPolicyLabels("default", fmt.Sprintf("cidr-%d", i), uuid, utils.ResourceTypeCiliumNetworkPolicy),
 		}
-		rule.Sanitize()
 		rules = append(rules, &rule)
 	}
 	return rules, generateCIDRIdentities(rules)
@@ -234,7 +233,6 @@ func TestL3WithIngressDenyWildcard(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 
@@ -325,7 +323,6 @@ func TestL3WithLocalHostWildcardd(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 
@@ -420,7 +417,6 @@ func TestMapStateWithIngressDenyWildcard(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 
@@ -546,7 +542,6 @@ func TestMapStateWithIngressDeny(t *testing.T) {
 		},
 	}
 
-	rule1.Sanitize()
 	_, _, err := repo.mustAdd(rule1)
 	require.NoError(t, err)
 

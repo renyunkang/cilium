@@ -626,8 +626,13 @@ func Test_MergeL3(t *testing.T) {
 		}
 
 		round := 0
-		Perm(tt.rules, func(rules []*api.Rule) {
+		Perm(tt.rules, func(r []*api.Rule) {
 			round++
+
+			rules := make([]*api.Rule, len(r))
+			for i, rule := range r {
+				rules[i] = rule.DeepCopy()
+			}
 
 			repo := newPolicyDistillery(selectorCache)
 			_, _ = repo.MustAddList(rules)
@@ -1170,7 +1175,7 @@ func Test_MergeRules(t *testing.T) {
 		for _, r := range tt.rules {
 			if r != nil {
 				rule := r.WithEndpointSelector(selectFoo_)
-				_, _ = repo.MustAddList(api.Rules{rule})
+				_, _ = repo.MustAddList(api.Rules{rule.DeepCopy()})
 			}
 		}
 		t.Run(fmt.Sprintf("permutation_%d", tt.test), func(t *testing.T) {
@@ -1265,7 +1270,7 @@ func Test_MergeRulesWithNamedPorts(t *testing.T) {
 		for _, r := range tt.rules {
 			if r != nil {
 				rule := r.WithEndpointSelector(selectFoo_)
-				_, _ = repo.MustAddList(api.Rules{rule})
+				_, _ = repo.MustAddList(api.Rules{rule.DeepCopy()})
 			}
 		}
 		t.Run(fmt.Sprintf("permutation_%d", tt.test), func(t *testing.T) {
@@ -1311,7 +1316,7 @@ func Test_AllowAll(t *testing.T) {
 		for _, r := range tt.rules {
 			if r != nil {
 				rule := r.WithEndpointSelector(tt.selector)
-				_, _ = repo.MustAddList(api.Rules{rule})
+				_, _ = repo.MustAddList(api.Rules{rule.DeepCopy()})
 			}
 		}
 		t.Run(fmt.Sprintf("permutation_%d", tt.test), func(t *testing.T) {
@@ -1744,7 +1749,7 @@ func Test_EnsureDeniesPrecedeAllows(t *testing.T) {
 		repo := newPolicyDistillery(selectorCache)
 		for _, rule := range tt.rules {
 			if rule != nil {
-				_, _ = repo.MustAddList(api.Rules{rule})
+				_, _ = repo.MustAddList(api.Rules{rule.DeepCopy()})
 			}
 		}
 		t.Run(tt.test, func(t *testing.T) {
@@ -2019,14 +2024,14 @@ func TestEgressPortRangePrecedence(t *testing.T) {
 			ctxFromA.Logging = stdlog.New(buffer, "", 0)
 			defer t.Log(buffer)
 
-			require.NoError(t, tr.Sanitize())
+			require.NoError(t, tr.DeepCopy().Sanitize())
 			state := traceState{}
 			res, err := tr.resolveEgressPolicy(td.testPolicyContext, &ctxFromA, &state, NewL4PolicyMap(), nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, res)
 
 			repo := newPolicyDistillery(td.sc)
-			repo.MustAddList(api.Rules{&tr.Rule})
+			repo.MustAddList(api.Rules{tr.Rule.DeepCopy()})
 			repo = repo.WithLogBuffer(buffer)
 			mapstate, err := repo.distillPolicy(DummyOwner{}, labelsA, identity)
 			require.NoError(t, err)

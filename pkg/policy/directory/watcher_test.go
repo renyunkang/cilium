@@ -117,7 +117,7 @@ func TestDeleteFromPolicyEngine(t *testing.T) {
 	// validate deleteFromPolicyEngine returns no error and clears map entry
 	data := []byte(policy1)
 	cnp, _ := p.translateToCNPObject(data)
-	err := p.addToPolicyEngine(cnp, "test.yaml")
+	err := p.addToPolicyEngine(cnp.DeepCopy(), "test.yaml")
 	require.NoError(t, err, "")
 	require.Len(t, p.fileNameToCnpCache, 1)
 	err = p.deleteFromPolicyEngine("test.yaml")
@@ -125,7 +125,7 @@ func TestDeleteFromPolicyEngine(t *testing.T) {
 	require.Empty(t, p.fileNameToCnpCache)
 
 	// Delete non existent entry and validate if appropriate error returned
-	p.addToPolicyEngine(cnp, "test2.yaml")
+	p.addToPolicyEngine(cnp.DeepCopy(), "test2.yaml")
 	err = p.deleteFromPolicyEngine("test.yaml")
 	require.ErrorContains(t, err, "fileNameToCnp map entry doesn't exist",
 		"Expected error `fileNameToCnp map entry doesn't exist` but got:%v", err)

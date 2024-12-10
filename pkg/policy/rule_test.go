@@ -1297,15 +1297,15 @@ func TestPolicyEntityValidationEgress(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, r.Sanitize())
+	require.NoError(t, r.DeepCopy().Sanitize())
 	require.Len(t, r.Egress[0].ToEntities, 1)
 
 	r.Egress[0].ToEntities = []api.Entity{api.EntityHost}
-	require.NoError(t, r.Sanitize())
+	require.NoError(t, r.DeepCopy().Sanitize())
 	require.Len(t, r.Egress[0].ToEntities, 1)
 
 	r.Egress[0].ToEntities = []api.Entity{"trololo"}
-	require.Error(t, r.Sanitize())
+	require.Error(t, r.DeepCopy().Sanitize())
 }
 
 func TestPolicyEntityValidationIngress(t *testing.T) {
@@ -1319,15 +1319,15 @@ func TestPolicyEntityValidationIngress(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, r.Sanitize())
+	require.NoError(t, r.DeepCopy().Sanitize())
 	require.Len(t, r.Ingress[0].FromEntities, 1)
 
 	r.Ingress[0].FromEntities = []api.Entity{api.EntityHost}
-	require.NoError(t, r.Sanitize())
+	require.NoError(t, r.DeepCopy().Sanitize())
 	require.Len(t, r.Ingress[0].FromEntities, 1)
 
 	r.Ingress[0].FromEntities = []api.Entity{"trololo"}
-	require.Error(t, r.Sanitize())
+	require.Error(t, r.DeepCopy().Sanitize())
 }
 
 func TestPolicyEntityValidationEntitySelectorsFill(t *testing.T) {
@@ -1365,8 +1365,8 @@ func TestL3RuleLabels(t *testing.T) {
 		"rule0": {
 			EndpointSelector: api.NewESFromLabels(labels.ParseSelectLabel("bar")),
 			Labels:           ruleLabels["rule0"],
-			Ingress:          []api.IngressRule{},
-			Egress:           []api.EgressRule{},
+			Ingress:          []api.IngressRule{{}},
+			Egress:           []api.EgressRule{{}},
 		},
 		"rule1": {
 			EndpointSelector: api.NewESFromLabels(labels.ParseSelectLabel("bar")),
@@ -1499,8 +1499,8 @@ func TestL4RuleLabels(t *testing.T) {
 		"rule0": {
 			EndpointSelector: api.NewESFromLabels(labels.ParseSelectLabel("bar")),
 			Labels:           ruleLabels["rule0"],
-			Ingress:          []api.IngressRule{},
-			Egress:           []api.EgressRule{},
+			Ingress:          []api.IngressRule{{}},
+			Egress:           []api.EgressRule{{}},
 		},
 
 		"rule1": {
