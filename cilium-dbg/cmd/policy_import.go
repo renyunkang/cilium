@@ -41,6 +41,7 @@ var policyImportCmd = &cobra.Command{
 			}
 
 			for _, r := range ruleList {
+				fmt.Printf("policy is %v\n", r)
 				if err := r.Sanitize(); err != nil {
 					if errors.Is(err, api.ErrFromToNodesRequiresNodeSelectorOption) {
 						// Don't error out as this can't be validated client-side
@@ -49,6 +50,10 @@ var policyImportCmd = &cobra.Command{
 						Fatalf("%s", err)
 					}
 				}
+
+				fmt.Printf("====================================\n")
+				fmt.Printf("policy is %v\n", r)
+				fmt.Printf("====================================>\n")
 			}
 
 			jsonPolicy, err := json.MarshalIndent(ruleList, "", "  ")

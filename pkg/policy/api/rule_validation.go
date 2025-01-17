@@ -37,18 +37,7 @@ func (r *Rule) Sanitize() error {
 		return fmt.Errorf("rule must have at least one of Ingress, IngressDeny, Egress, EgressDeny")
 	}
 
-	if r.EnableDefaultDeny.Egress != nil {
-		if r.Egress == nil && r.EgressDeny == nil {
-			return fmt.Errorf("when EnableDefaultDeny.Egress is set, rule must have at least one of Egress, EgressDeny")
-		}
-	}
-
-	if r.EnableDefaultDeny.Ingress != nil {
-		if r.Ingress == nil && r.IngressDeny == nil {
-			return fmt.Errorf("when EnableDefaultDeny.Ingress is set, rule must have at least one of Ingress, IngressDeny")
-		}
-	}
-
+	// fmt.Printf("EnableNonDefaultDenyPolicies: %v\n", option.Config.EnableNonDefaultDenyPolicies)
 	if option.Config.EnableNonDefaultDenyPolicies {
 		// Fill in the default traffic posture of this Rule.
 		// Default posture is per-direction (ingress or egress),
@@ -57,10 +46,18 @@ func (r *Rule) Sanitize() error {
 		if r.EnableDefaultDeny.Egress == nil {
 			x := len(r.Egress) > 0 || len(r.EgressDeny) > 0
 			r.EnableDefaultDeny.Egress = &x
+		} else {
+			if r.Egress == nil && r.EgressDeny == nil {
+				return fmt.Errorf("when EnableDefaultDeny.Egress is set, rule must have at least one of Egress, EgressDeny")
+			}
 		}
 		if r.EnableDefaultDeny.Ingress == nil {
 			x := len(r.Ingress) > 0 || len(r.IngressDeny) > 0
 			r.EnableDefaultDeny.Ingress = &x
+		} else {
+			if r.Ingress == nil && r.IngressDeny == nil {
+				return fmt.Errorf("when EnableDefaultDeny.Ingress is set, rule must have at least one of Ingress, IngressDeny")
+			}
 		}
 	} else {
 		// Since Non Default Deny Policies is disabled by flag, set EnableDefaultDeny to true
